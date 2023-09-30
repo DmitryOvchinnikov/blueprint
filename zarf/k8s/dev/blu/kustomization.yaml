@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../../base/blu/
+- ./dev-blu-vault.yaml
+patches:
+- path: ./dev-blu-patch-deploy.yaml
+- path: ./dev-blu-patch-service.yaml
+- path: ./dev-blu-vault-patch.yaml
+images:
+- name: metrics-image
+  newName: dmitryovchinnikov/blueprint/blu-api-metrics
+  newTag: 0.0.1
+- name: service-image
+  newName: dmitryovchinnikov/blueprint/blu-api
+  newTag: 0.0.1
