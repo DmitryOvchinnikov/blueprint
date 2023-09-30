@@ -1,4 +1,4 @@
-# Blueprint: blueprint with Kubernetes
+# Blueprint: Service with Kubernetes
 
 ## Installation
 
