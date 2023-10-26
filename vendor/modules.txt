@@ -1,3 +1,0 @@
-# github.com/ardanlabs/conf/v3 v3.1.6
-## explicit; go 1.13
-github.com/ardanlabs/conf/v3

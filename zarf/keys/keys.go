@@ -1,9 +1,10 @@
-// Package keys stores development public/private key pairs used by the service.
+// Package keys stores development public/private key pairs used by the blueprint.
 package keys
 
 import "embed"
 
-// DevKeysFS is a filesystem that holds development private/public key pairs used by the service.
+// DevKeysFS is a filesystem that holds development private/public key pairs
+// used by the blueprint.
 //
 //go:embed *
 var DevKeysFS embed.FS

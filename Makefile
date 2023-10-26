@@ -3,11 +3,9 @@ SHELL_PATH = /bin/ash
 SHELL = $(if $(wildcard $(SHELL_PATH)),/bin/ash,/bin/bash)
 
 # Deploy First Mentality
-# **********************
 
-
+# ==============================================================================
 # Brew Installation
-# *****************
 #
 #	Having brew installed will simplify the process of installing all the tooling.
 #
@@ -30,9 +28,8 @@ SHELL = $(if $(wildcard $(SHELL_PATH)),/bin/ash,/bin/bash)
 # 	Install GCC:
 #	$ brew install gcc
 
-
+# ==============================================================================
 # Install Tooling and Dependencies
-# ********************************
 #
 #   This project uses Docker and it is expected to be installed. Please provide
 #   Docker at least 3 CPUs.
@@ -42,18 +39,16 @@ SHELL = $(if $(wildcard $(SHELL_PATH)),/bin/ash,/bin/bash)
 #	$ make dev-docker
 #	$ make dev-gotooling
 
-
+# ==============================================================================
 # Running Test
-# ************
 #
 #	Running the tests is a good way to verify you have installed most of the
 #	dependencies properly.
 #
 #	$ make test
 
-
+# ==============================================================================
 # Running The Project
-# *******************
 #
 #	$ make dev-up
 #	$ make dev-update-apply
@@ -63,9 +58,8 @@ SHELL = $(if $(wildcard $(SHELL_PATH)),/bin/ash,/bin/bash)
 #
 #   You can use `make dev-status` to look at the status of your KIND cluster.
 
-
+# ==============================================================================
 # CLASS NOTES
-# ***********
 #
 # Kind
 # 	For full Kind v0.20 release notes: https://github.com/kubernetes-sigs/kind/releases/tag/v0.20.0
@@ -74,7 +68,7 @@ SHELL = $(if $(wildcard $(SHELL_PATH)),/bin/ash,/bin/bash)
 # 	To generate a private/public key PEM file.
 # 	$ openssl genpkey -algorithm RSA -out private.pem -pkeyopt rsa_keygen_bits:2048
 # 	$ openssl rsa -pubout -in private.pem -out public.pem
-# 	$ ./blu-admin genkey
+# 	$ ./mold-admin genkey
 #
 # Testing Coverage
 # 	$ go test -coverprofile p.out
@@ -85,9 +79,9 @@ SHELL = $(if $(wildcard $(SHELL_PATH)),/bin/ash,/bin/bash)
 # 	$ export VAULT_TOKEN=mytoken
 # 	$ export VAULT_ADDR='http://localhost:8200'
 # 	$ vault secrets list
-# 	$ vault kv get secret/blu
-# 	$ vault kv put secret/blu key="some data"
-# 	$ kubectl logs --namespace=blu-system -l app=blu -c init-vault-server
+# 	$ vault kv get secret/mold
+# 	$ vault kv put secret/mold key="some data"
+# 	$ kubectl logs --namespace=mold-system -l app=mold -c init-vault-server
 # 	$ curl -H "X-Vault-Token: mytoken" -X GET http://localhost:8200/v1/secret/data/54bb2165-71e1-41a6-af3e-7da4a0e1e2c1
 # 	$ curl -H "X-Vault-Token: mytoken" -H "Content-Type: application/json" -X POST -d '{"data":{"pk":"PEM"}}' http://localhost:8200/v1/secret/data/54bb2165-71e1-41a6-af3e-7da4a0e1e2c1
 #
@@ -104,35 +98,33 @@ SHELL = $(if $(wildcard $(SHELL_PATH)),/bin/ash,/bin/bash)
 # 	https://academy.styra.com/
 # 	https://www.openpolicyagent.org/docs/latest/policy-reference/
 
-
+# ==============================================================================
 # Define dependencies
-# *******************
 
-GOLANG          := golang:1.21.1
+GOLANG          := golang:1.21.3
 ALPINE          := alpine:3.18
 KIND            := kindest/node:v1.27.3
 POSTGRES        := postgres:15.4
-VAULT           := hashicorp/vault:1.14
+VAULT           := hashicorp/vault:1.15
 GRAFANA         := grafana/grafana:10.1.0
 PROMETHEUS      := prom/prometheus:v2.47.0
 TEMPO           := grafana/tempo:2.2.0
 LOKI            := grafana/loki:2.9.0
 PROMTAIL        := grafana/promtail:2.9.0
 
-KIND_CLUSTER    := mold-starter-cluster
-NAMESPACE       := blu-system
-APP             := blu
-BASE_IMAGE_NAME := moldlabs/blueprint
-SERVICE_NAME    := blu-api
+KIND_CLUSTER    := blueprint-starter-cluster
+NAMESPACE       := mold-system
+APP             := mold
+BASE_IMAGE_NAME := dmitryovchinnikov/blueprint
+SERVICE_NAME    := mold-api
 VERSION         := 0.0.1
 SERVICE_IMAGE   := $(BASE_IMAGE_NAME)/$(SERVICE_NAME):$(VERSION)
 METRICS_IMAGE   := $(BASE_IMAGE_NAME)/$(SERVICE_NAME)-metrics:$(VERSION)
 
 # VERSION       := "0.0.1-$(shell git rev-parse --short HEAD)"
 
-
+# ==============================================================================
 # Install dependencies
-# ********************
 
 dev-gotooling:
 	go install github.com/divan/expvarmon@latest
@@ -162,15 +154,14 @@ dev-docker:
 	docker pull $(LOKI)
 	docker pull $(PROMTAIL)
 
-
+# ==============================================================================
 # Building containers
-# *******************
 
 all: service metrics
 
 service:
 	docker build \
-		-f zarf/docker/blu/Dockerfile \
+		-f zarf/docker/dockerfile.service \
 		-t $(SERVICE_IMAGE) \
 		--build-arg BUILD_REF=$(VERSION) \
 		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
@@ -178,15 +169,14 @@ service:
 
 metrics:
 	docker build \
-		-f zarf/docker/metrics/Dockerfile \
+		-f zarf/docker/dockerfile.metrics \
 		-t $(METRICS_IMAGE) \
 		--build-arg BUILD_REF=$(VERSION) \
 		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
 		.
 
-
+# ==============================================================================
 # Running from within k8s/kind
-# ****************************
 
 dev-up:
 	kind create cluster \
@@ -196,8 +186,8 @@ dev-up:
 
 	kubectl wait --timeout=120s --namespace=local-path-storage --for=condition=Available deployment/local-path-provisioner
 
-	kind load docker-image $(POSTGRES) --name $(KIND_CLUSTER)
 	kind load docker-image $(VAULT) --name $(KIND_CLUSTER)
+	kind load docker-image $(POSTGRES) --name $(KIND_CLUSTER)
 	kind load docker-image $(GRAFANA) --name $(KIND_CLUSTER)
 	kind load docker-image $(PROMETHEUS) --name $(KIND_CLUSTER)
 	kind load docker-image $(TEMPO) --name $(KIND_CLUSTER)
@@ -207,13 +197,13 @@ dev-up:
 dev-down:
 	kind delete cluster --name $(KIND_CLUSTER)
 
-# *********************************************************
+# ------------------------------------------------------------------------------
 
 dev-load:
-	cd zarf/k8s/dev/blu; kustomize edit set image service-image=$(SERVICE_IMAGE)
+	cd zarf/k8s/dev/mold; kustomize edit set image service-image=$(SERVICE_IMAGE)
 	kind load docker-image $(SERVICE_IMAGE) --name $(KIND_CLUSTER)
 
-	cd zarf/k8s/dev/blu; kustomize edit set image metrics-image=$(METRICS_IMAGE)
+	cd zarf/k8s/dev/mold; kustomize edit set image metrics-image=$(METRICS_IMAGE)
 	kind load docker-image $(METRICS_IMAGE) --name $(KIND_CLUSTER)
 
 dev-apply:
@@ -237,7 +227,7 @@ dev-apply:
 	kustomize build zarf/k8s/dev/promtail | kubectl apply -f -
 	kubectl wait pods --namespace=$(NAMESPACE) --selector app=promtail --timeout=120s --for=condition=Ready
 
-	kustomize build zarf/k8s/dev/blu | kubectl apply -f -
+	kustomize build zarf/k8s/dev/mold | kubectl apply -f -
 	kubectl wait pods --namespace=$(NAMESPACE) --selector app=$(APP) --timeout=120s --for=condition=Ready
 
 dev-restart:
@@ -247,7 +237,7 @@ dev-update: all dev-load dev-restart
 
 dev-update-apply: all dev-load dev-apply
 
-# *********************************************************
+# ------------------------------------------------------------------------------
 
 dev-logs:
 	kubectl logs --namespace=$(NAMESPACE) -l app=$(APP) --all-containers=true -f --tail=100 --max-log-requests=6 | go run app/tooling/logfmt/main.go -service=$(SERVICE_NAME)
@@ -270,13 +260,10 @@ dev-describe:
 dev-describe-deployment:
 	kubectl describe deployment --namespace=$(NAMESPACE) $(APP)
 
-dev-describe-blu:
+dev-describe-mold:
 	kubectl describe pod --namespace=$(NAMESPACE) -l app=$(APP)
 
-dev-describe-telepresence:
-	kubectl describe pod --namespace=ambassador -l app=traffic-manager
-
-# *********************************************************
+# ------------------------------------------------------------------------------
 
 dev-logs-vault:
 	kubectl logs --namespace=$(NAMESPACE) -l app=vault --all-containers=true -f --tail=100
@@ -296,10 +283,10 @@ dev-logs-loki:
 dev-logs-promtail:
 	kubectl logs --namespace=$(NAMESPACE) -l app=promtail --all-containers=true -f --tail=100
 
-# *********************************************************
+# ------------------------------------------------------------------------------
 
 dev-services-delete:
-	kustomize build zarf/k8s/dev/blu | kubectl delete -f -
+	kustomize build zarf/k8s/dev/mold | kubectl delete -f -
 	kustomize build zarf/k8s/dev/grafana | kubectl delete -f -
 	kustomize build zarf/k8s/dev/tempo | kubectl delete -f -
 	kustomize build zarf/k8s/dev/loki | kubectl delete -f -
@@ -317,23 +304,22 @@ dev-events-warn:
 	kubectl get ev --field-selector type=Warning --sort-by metadata.creationTimestamp
 
 dev-shell:
-	kubectl exec --namespace=$(NAMESPACE) -it $(shell kubectl get pods --namespace=$(NAMESPACE) | grep blu | cut -c1-26) --container blu-api -- /bin/sh
+	kubectl exec --namespace=$(NAMESPACE) -it $(shell kubectl get pods --namespace=$(NAMESPACE) | grep mold | cut -c1-26) --container mold-api -- /bin/sh
 
 dev-database-restart:
 	kubectl rollout restart statefulset database --namespace=$(NAMESPACE)
 
-
+# ==============================================================================
 # Administration
-# **************
 
 migrate:
-	go run app/tooling/blu-admin/main.go migrate
+	go run app/tooling/mold-admin/main.go migrate
 
 seed: migrate
-	go run app/tooling/blu-admin/main.go seed
+	go run app/tooling/mold-admin/main.go seed
 
 vault:
-	go run app/tooling/blu-admin/main.go vault
+	go run app/tooling/mold-admin/main.go vault
 
 pgcli:
 	pgcli postgresql://postgres:postgres@localhost
@@ -345,11 +331,10 @@ readiness:
 	curl -il http://localhost:3000/v1/readiness
 
 token-gen:
-	go run app/tooling/blu-admin/main.go gentoken 5cf37266-3473-4006-984f-9325122678b7 54bb2165-71e1-41a6-af3e-7da4a0e1e2c1
+	go run app/tooling/mold-admin/main.go gentoken 5cf37266-3473-4006-984f-9325122678b7 54bb2165-71e1-41a6-af3e-7da4a0e1e2c1
 
-
+# ==============================================================================
 # Metrics and Tracing
-# *******************
 
 metrics-view-sc:
 	expvarmon -ports="localhost:4000" -vars="build,requests,goroutines,errors,panics,mem:memstats.Alloc"
@@ -360,9 +345,8 @@ metrics-view:
 grafana:
 	open -a "Google Chrome" http://localhost:3100/
 
-
+# ==============================================================================
 # Running tests within the local computer
-# ***************************************
 
 test-race:
 	CGO_ENABLED=1 go test -race -count=1 ./...
@@ -389,9 +373,8 @@ docs:
 docs-debug:
 	go run app/tooling/docs/main.go $(ARGS)
 
-
+# ==============================================================================
 # Hitting endpoints
-# *****************
 
 token:
 	curl -il --user "admin@example.com:gophers" http://localhost:3000/v1/users/token/54bb2165-71e1-41a6-af3e-7da4a0e1e2c1
@@ -407,9 +390,8 @@ load:
 otel-test:
 	curl -il -H "Traceparent: 00-918dd5ecf264712262b68cf2ef8b5239-896d90f23f69f006-01" --user "admin@example.com:gophers" http://localhost:3000/v1/users/token/54bb2165-71e1-41a6-af3e-7da4a0e1e2c1
 
-
+# ==============================================================================
 # Modules support
-# ***************
 
 deps-reset:
 	git checkout -- go.mod
@@ -434,9 +416,8 @@ deps-cleancache:
 list:
 	go list -mod=mod all
 
-
+# ==============================================================================
 # Admin Frontend
-# **************
 
 ADMIN_FRONTEND_PREFIX := ./app/frontends/admin
 
@@ -445,22 +426,21 @@ write-token-to-env:
 	make token | grep -o '"ey.*"' | awk '{print "VITE_SERVICE_TOKEN="$$1}' >> ${ADMIN_FRONTEND_PREFIX}/.env
 
 admin-gui-install:
-	pnpm -C ${ADMIN_FRONTEND_PREFIX} install
+	pnpm -C ${ADMIN_FRONTEND_PREFIX} install 
 
 admin-gui-dev: admin-gui-install
-	pnpm -C ${ADMIN_FRONTEND_PREFIX} run dev
+	pnpm -C ${ADMIN_FRONTEND_PREFIX} run dev 
 
 admin-gui-build: admin-gui-install
-	pnpm -C ${ADMIN_FRONTEND_PREFIX} run build
+	pnpm -C ${ADMIN_FRONTEND_PREFIX} run build 
 
 admin-gui-start-build: admin-gui-build
-	pnpm -C ${ADMIN_FRONTEND_PREFIX} run preview
+	pnpm -C ${ADMIN_FRONTEND_PREFIX} run preview 
 
 admin-gui-run: write-token-to-env admin-gui-start-build
 
-
-# Running using Service Weaver
-# ****************************
+# ==============================================================================
+# Running using Service Weaver.
 
 wea-dev-gotooling: dev-gotooling
 	go install github.com/ServiceWeaver/weaver/cmd/weaver@latest
@@ -485,8 +465,8 @@ wea-dev-apply:
 	kustomize build zarf/k8s/dev/database | kubectl --context=kind-$(KIND_CLUSTER) apply -f -
 	kubectl rollout status --context=kind-$(KIND_CLUSTER) --namespace=$(NAMESPACE) --watch --timeout=120s sts/database
 
-	cd app/weaver/blu-api; GOOS=linux GOARCH=amd64 go build .
-	$(eval WEAVER_YAML := $(shell weaver-kube deploy app/weaver/blu-api/dev.toml))
+	cd app/weaver/mold-api; GOOS=linux GOARCH=amd64 go build .
+	$(eval WEAVER_YAML := $(shell weaver-kube deploy app/weaver/mold-api/dev.toml))
 	kind load docker-image $(SERVICE_IMAGE) --name $(KIND_CLUSTER)
 
 	kubectl --context=kind-$(KIND_CLUSTER) apply -f $(WEAVER_YAML)

@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mold-api
+  namespace: mold-system
+
+spec:
+  type: ClusterIP
+
+  ports:
+  - name: mold-api
+    port: 3000
+    targetPort: mold-api
+  - name: mold-api-debug
+    port: 4000
+    targetPort: mold-api-debug
+  - name: metrics
+    port: 3001
+    targetPort: metrics
+  - name: prometheus
+    port: 3002
+    targetPort: prometheus

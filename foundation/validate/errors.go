@@ -14,7 +14,7 @@ type FieldError struct {
 // FieldErrors represents a collection of field errors.
 type FieldErrors []FieldError
 
-// NewFieldsError creates a field error.
+// NewFieldsError creates an fields error.
 func NewFieldsError(field string, err error) error {
 	return FieldErrors{
 		{

@@ -2,8 +2,9 @@ package logger
 
 import (
 	"context"
-	"log/slog"
 	"time"
+
+	"log/slog"
 )
 
 // Level represents different logging levels.
@@ -16,6 +17,8 @@ const (
 	LevelWarn  = Level(slog.LevelWarn)
 	LevelError = Level(slog.LevelError)
 )
+
+// =============================================================================
 
 // Record represents the data that is being logged.
 type Record struct {

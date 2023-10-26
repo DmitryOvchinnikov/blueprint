@@ -1,8 +1,8 @@
 # Binaries
-app/services/sales-api/sales-api
+app/services/mold-api/mold-api
 app/services/metrics/metrics
-app/tooling/sales-admin/sales-admin
-app/tooling/sales-admin/logfmt
+app/tooling/mold-admin/mold-admin
+app/tooling/mold-admin/logfmt
 
 # Environment
 app/frontends/admin/.env
@@ -42,3 +42,5 @@ _testmain.go
 *.exe
 *.test
 .vscode/tasks.json
+vendor/*
+/vendor/

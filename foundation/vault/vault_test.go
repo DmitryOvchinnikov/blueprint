@@ -19,7 +19,7 @@ func Test_Vault(t *testing.T) {
 	const token = "mytoken"
 	const mountPath = "secret"
 	const key = "54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"
-	const image = "hashicorp/vault:1.14"
+	const image = "hashicorp/vault:1.15"
 	const port = "8200"
 
 	dockerArgs := []string{"-e", "VAULT_DEV_ROOT_TOKEN_ID=" + token, "-e", "VAULT_DEV_LISTEN_ADDRESS=" + address}
@@ -35,7 +35,9 @@ func Test_Vault(t *testing.T) {
 	t.Logf("Host:        %s\n", c.Host)
 
 	// Give Vault time to initialize.
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * 2)
+
+	// -------------------------------------------------------------------------
 
 	vault, err := vault.New(vault.Config{
 		Address:   "http://" + c.Host,

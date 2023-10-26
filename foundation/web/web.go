@@ -53,7 +53,8 @@ func NewApp(shutdown chan os.Signal, tracer trace.Tracer, mw ...Middleware) *App
 	}
 }
 
-// SignalShutdown is used to gracefully shut down the app when an integrity issue is identified.
+// SignalShutdown is used to gracefully shut down the app when an integrity
+// issue is identified.
 func (a *App) SignalShutdown() {
 	a.shutdown <- syscall.SIGTERM
 }
@@ -88,10 +89,7 @@ func (a *App) EnableCORS(mw Middleware) {
 		}
 		ctx = SetValues(ctx, &v)
 
-		err := handler(ctx, w, r)
-		if err != nil {
-			return
-		}
+		handler(ctx, w, r)
 	}
 }
 
@@ -110,7 +108,9 @@ func (a *App) Handle(method string, group string, path string, handler Handler, 
 	a.handle(method, group, path, handler)
 }
 
-// Handle sets a handler function for a given HTTP method and path pair
+// =============================================================================
+
+// handle sets a handler function for a given HTTP method and path pair
 // to the application server mux.
 func (a *App) handle(method string, group string, path string, handler Handler) {
 	h := func(w http.ResponseWriter, r *http.Request) {

@@ -1,4 +1,10 @@
-# Blueprint: Service with Kubernetes
+# The Service with Kubernetes
+
+## Description
+
+This class teaches how to build production-level services in Go leveraging the power of Kubernetes. From the beginning, walking through the design philosophies and guidelines for building services in Go. With each new feature that is added to the service, learn how to deploy to and manage the Kubernetes environment used to run the service.
+
+This project leverages ideas around clean architecture and domain driven design. This code base, the architecture, and ideas are being used in production Go services running all over the world.
 
 ## Installation
 
@@ -9,7 +15,7 @@ $ cd $HOME
 $ mkdir code
 $ cd code
 $ git clone https://github.com/dmitryovchinnikov/blueprint or git@github.com:dmitryovchinnikov/blueprint.git
-$ cd blueprint
+$ cd service
 ```
 
 ## Create Your Own Version

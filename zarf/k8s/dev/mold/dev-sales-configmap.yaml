@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: mold-system
+data:
+  db_host: "database-blueprint.mold-system.svc.cluster.local"
+  db_user: "postgres"
+  db_password: "postgres"
+  db_disabletls: "true"

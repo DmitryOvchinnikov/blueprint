@@ -1,4 +1,5 @@
-// Package keystore implements the auth.KeyLookup interface. This implements an in-memory keystore for JWT support.
+// Package keystore implements the auth.KeyLookup interface. This implements
+// an in-memory keystore for JWT support.
 package keystore
 
 import (
@@ -13,7 +14,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 // PrivateKey represents key information.
@@ -43,7 +44,7 @@ func NewMap(store map[string]PrivateKey) *KeyStore {
 }
 
 // NewFS constructs a KeyStore based on a set of PEM files rooted inside
-// a directory. The name of each PEM file will be used as the key id.
+// of a directory. The name of each PEM file will be used as the key id.
 // Example: keystore.NewFS(os.DirFS("/zarf/keys/"))
 // Example: /zarf/keys/54bb2165-71e1-41a6-af3e-7da4a0e1e2c1.pem
 func NewFS(fsys fs.FS) (*KeyStore, error) {
@@ -71,19 +72,19 @@ func NewFS(fsys fs.FS) (*KeyStore, error) {
 		// limit PEM file size to 1 megabyte. This should be reasonable for
 		// almost any PEM file and prevents shenanigans like linking the file
 		// to /dev/random or something like that.
-		pm, err := io.ReadAll(io.LimitReader(file, 1024*1024))
+		pem, err := io.ReadAll(io.LimitReader(file, 1024*1024))
 		if err != nil {
 			return fmt.Errorf("reading auth private key: %w", err)
 		}
 
-		pk, err := jwt.ParseRSAPrivateKeyFromPEM(pm)
+		pk, err := jwt.ParseRSAPrivateKeyFromPEM(pem)
 		if err != nil {
 			return fmt.Errorf("parsing auth private key: %w", err)
 		}
 
 		key := PrivateKey{
 			PK:  pk,
-			PEM: pm,
+			PEM: pem,
 		}
 
 		ks.store[strings.TrimSuffix(dirEntry.Name(), ".pem")] = key

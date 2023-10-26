@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: blu-system
+  name: mold-system
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: tempo-conf
-  namespace: blu-system
+  namespace: mold-system
 data:
   tempo.yaml: |
     usage_report:
@@ -19,11 +19,11 @@ data:
     distributor:
       receivers: # this configuration will listen on all ports and protocols that tempo is capable of.
         #jaeger: # the receives all come from the OpenTelemetry collector.  more configuration information can
-        #protocols: # be found there: https://github.com/open-telemetry/opentelemetry-collector/tree/main/receiver
-        #thrift_http:                   #
-        #grpc:                          # for a production deployment you should only enable the receivers you need!
-        #thrift_binary:
-        #thrift_compact:
+          #protocols: # be found there: https://github.com/open-telemetry/opentelemetry-collector/tree/main/receiver
+            #thrift_http:                   #
+            #grpc:                          # for a production deployment you should only enable the receivers you need!
+            #thrift_binary:
+            #thrift_compact:
         #zipkin:
         otlp:
           protocols:
@@ -60,7 +60,7 @@ data:
           queue_depth: 10000
 
     overrides:
-      metrics_generator_processors: [ service-graphs, span-metrics ]
+      metrics_generator_processors: [ blueprint-graphs, span-metrics ]
 
 #    metrics_generator:
 #      registry:
@@ -78,7 +78,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tempo
-  namespace: blu-system
+  namespace: mold-system
 spec:
   replicas: 1
   strategy:
@@ -89,7 +89,7 @@ spec:
       app: tempo
   template:
     metadata:
-      namespace: blu-system
+      namespace: mold-system
       labels:
         app: tempo
     spec:
@@ -126,7 +126,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: tempo
-  namespace: blu-system
+  namespace: mold-system
 spec:
   type: ClusterIP
   selector:

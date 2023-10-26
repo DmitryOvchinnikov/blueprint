@@ -1,4 +1,5 @@
-// Package docker provides support for starting and stopping docker containers for running tests.
+// Package docker provides support for starting and stopping docker containers
+// for running tests.
 package docker
 
 import (

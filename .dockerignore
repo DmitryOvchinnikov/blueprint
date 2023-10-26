@@ -8,5 +8,5 @@ zarf/docker/
 zarf/k8s/
 CONTRIBUTORS
 LICENSE
-makefile
+Makefile
 README.md

@@ -1,0 +1,189 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mold-system
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mold
+  namespace: mold-system
+
+spec:
+  selector:
+    matchLabels:
+      app: mold
+
+  template:
+    metadata:
+      labels:
+        app: mold
+
+    spec:
+      terminationGracePeriodSeconds: 60
+
+      initContainers:
+      - name: init-migrate
+        image: service-image
+        command: ['./mold-admin', 'migrate']
+        env:
+        - name: MOLD_DB_USER
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: db_user
+              optional: true
+        - name: MOLD_DB_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: db_password
+              optional: true
+        - name: MOLD_DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: db_host
+              optional: true
+        - name: MOLD_DB_DISABLE_TLS
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: db_disabletls
+              optional: true
+
+      - name: init-seed
+        image: service-image
+        command: ['./mold-admin', 'seed']
+        env:
+        - name: MOLD_DB_USER
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: db_user
+              optional: true
+        - name: MOLD_DB_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: db_password
+              optional: true
+        - name: MOLD_DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: db_host
+              optional: true
+        - name: MOLD_DB_DISABLE_TLS
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: db_disabletls
+              optional: true
+
+      containers:
+      - name: mold-api
+        image: service-image
+
+        ports:
+        - name: mold-api
+          containerPort: 3000
+        - name: mold-api-debug
+          containerPort: 4000
+
+        readinessProbe: # readiness probes mark the blueprint available to accept traffic.
+          httpGet:
+            path: /v1/readiness
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 2
+
+        livenessProbe: # liveness probes mark the blueprint alive or dead (to be restarted).
+          httpGet:
+            path: /v1/liveness
+            port: 3000
+          initialDelaySeconds: 2
+          periodSeconds: 5
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 2
+
+        env:
+        - name: MOLD_DB_USER # here as an example for configuring a hosted db.
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: db_user
+              optional: true
+        - name: MOLD_DB_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: db_password
+              optional: true
+        - name: MOLD_DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: db_host
+              optional: true
+        - name: MOLD_DB_DISABLE_TLS
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: db_disabletls
+              optional: true
+
+        - name: GOMAXPROCS
+          valueFrom:
+            resourceFieldRef:
+              resource: limits.cpu
+
+        - name: KUBERNETES_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: KUBERNETES_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: KUBERNETES_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: KUBERNETES_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+
+      - name: metrics
+        image: metrics-image
+
+        ports:
+        - name: metrics
+          containerPort: 3001
+        - name: prometheus
+          containerPort: 3002
+
+        env:
+          - name: GOMAXPROCS
+            valueFrom:
+              resourceFieldRef:
+                resource: limits.cpu
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mold-api
+  namespace: mold-system
+
+spec:
+  selector:
+    app: mold

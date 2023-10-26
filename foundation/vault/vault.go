@@ -1,4 +1,5 @@
-// Package vault provides support for accessing Hashicorp's vault service to access private keys.
+// Package vault provides support for accessing Hashicorp's vault blueprint
+// to access private keys.
 package vault
 
 import (
@@ -73,15 +74,17 @@ func (v *Vault) SetToken(token string) {
 	v.token = token
 }
 
+// =============================================================================
+
 // AddPrivateKey adds a new private key into vault as PEM encoded.
-func (v *Vault) AddPrivateKey(ctx context.Context, kid string, pm []byte) error {
+func (v *Vault) AddPrivateKey(ctx context.Context, kid string, pem []byte) error {
 	url := fmt.Sprintf("%s/v1/%s/data/%s", v.address, v.mountPath, kid)
 
 	data := struct {
 		M map[string]string `json:"data"`
 	}{
 		M: map[string]string{
-			"pem": string(pm),
+			"pem": string(pem),
 		},
 	}
 	var b bytes.Buffer
@@ -129,8 +132,8 @@ func (v *Vault) PrivateKey(kid string) (string, error) {
 // PublicKey searches the key store for a given kid and returns
 // the public key in pem format.
 func (v *Vault) PublicKey(kid string) (string, error) {
-	if pm, err := v.keyLookup(kid); err == nil {
-		return pm, nil
+	if pem, err := v.keyLookup(kid); err == nil {
+		return pem, nil
 	}
 
 	privatePEM, err := v.PrivateKey(kid)
@@ -151,6 +154,8 @@ func (v *Vault) PublicKey(kid string) (string, error) {
 
 	return publicPEM, nil
 }
+
+// =============================================================================
 
 // Error variables for this set of API calls.
 var (
@@ -428,19 +433,21 @@ func (v *Vault) CreateToken(ctx context.Context, id string, policies []string, d
 	return nil
 }
 
+// =============================================================================
+
 // keyLookup performs a safe lookup in the store map.
 func (v *Vault) keyLookup(kid string) (string, error) {
 	v.mu.RLock()
 	defer v.mu.RUnlock()
 
-	if pm, exists := v.store[kid]; exists {
-		return pm, nil
+	if pem, exists := v.store[kid]; exists {
+		return pem, nil
 	}
 
 	return "", errors.New("not found")
 }
 
-// retrieveKID performs the HTTP call against the Vault service for the
+// retrieveKID performs the HTTP call against the Vault blueprint for the
 // specified kid and returns the pem value.
 func (v *Vault) retrieveKID(ctx context.Context, kid string) (string, error) {
 	url := fmt.Sprintf("%s/v1/%s/data/%s", v.address, v.mountPath, kid)
@@ -479,12 +486,12 @@ func (v *Vault) retrieveKID(ctx context.Context, kid string) (string, error) {
 		return "", fmt.Errorf("decoding: %w", err)
 	}
 
-	pm, ok := data.Data.Data["pem"]
+	pem, ok := data.Data.Data["pem"]
 	if !ok {
 		return "", fmt.Errorf("kid %q does not exist", kid)
 	}
 
-	return pm, nil
+	return pem, nil
 }
 
 // listMounts returns the set of mount points that exist.
@@ -519,8 +526,10 @@ func (v *Vault) listMounts(ctx context.Context) (map[string]interface{}, error) 
 	return response, nil
 }
 
+// =============================================================================
+
 // toPublicPEM was taken from the JWT package to reduce the dependency. It
-// accepts a PEM encoding of an RSA private key and converts to a PEM encoded
+// accepts a PEM encoding of a RSA private key and converts to a PEM encoded
 // public key.
 func toPublicPEM(privateKeyPEM string) (string, error) {
 	var block *pem.Block
